@@ -1,9 +1,12 @@
 package com.example.nivasa
 
 import android.content.Context
+import android.net.Uri
 import android.os.Environment
+import android.util.Log
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -23,6 +26,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.google.common.util.concurrent.ListenableFuture
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
 fun CameraPreview(
@@ -31,12 +36,12 @@ fun CameraPreview(
 ) {
     val context = LocalContext.current
     val lifeCycleOwner = LocalLifecycleOwner.current
+    val imageCapture = ImageCapture.Builder().build()
 
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
         if (hasCameraPermission) {
-
             val cameraProviderFuture = remember {
                 /*
                 * CameraProviderFuture: The cameraProviderFuture is a ListenableFuture
@@ -84,7 +89,8 @@ fun CameraPreview(
                         cameraProviderFuture.get().bindToLifecycle(
                             lifeCycleOwner,
                             selector,
-                            preview
+                            preview,
+                            imageCapture
                         )
                     } catch(e: Exception) {
                         e.printStackTrace()
@@ -95,7 +101,7 @@ fun CameraPreview(
         }  // end IF CAMERAHASPERMISSION
         // Button for capturing photos
         Button(
-            onClick = { /**/ }, // Call the capturePhoto function on button click
+            onClick = { captureSnap(context, imageCapture) }, // Call the capturePhoto function on button click
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .padding(16.dp)
@@ -106,7 +112,45 @@ fun CameraPreview(
 }
 
 private fun captureSnap(context: Context, imageCapture: ImageCapture) {
+    val TAG = "CAPTURE_SNAP"
     val outputDirectory = getOutputDirectory(context)
+    val timeStamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(System.currentTimeMillis())
+    val snapFile = File(outputDirectory, "IMG_${timeStamp}.jpg")
+
+    val outputOptions = ImageCapture.OutputFileOptions.Builder(snapFile).build()
+    imageCapture?.takePicture(
+        outputOptions,
+        ContextCompat.getMainExecutor(context),
+        object : ImageCapture.OnImageSavedCallback {
+            /*
+            * Define an anonymous implementation of the ImageCapture.OnImageSavedCallback interface.
+            * This interface is part of the CameraX library
+            * and is used for handling the result of an image capture operation.
+            * */
+            override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                /*
+                * This method is called when the image capture operation is successful.
+                * It provides an ImageCapture.OutputFileResults object
+                * that contains information about the saved image, such as the file path.
+                * */
+                val snapURI = Uri.fromFile(snapFile)
+                Log.d(TAG, "Got snap with URI: $snapURI")
+            }
+
+            override fun onError(exception: ImageCaptureException) {
+                /*
+                * This method is called if an error occurs during the image capture operation.
+                * It provides an ImageCaptureException object that contains details about the error.
+                * */
+                Log.e(TAG, "Captured No Snap! Error: ${exception.message}")
+            }
+            /*
+            * By implementing this interface anonymously using object : ImageCapture.OnImageSavedCallback,
+            * we have defined what should happen when the image is successfully saved (onImageSaved method)
+            * and what should happen in case of an error (onError method).
+            * */
+        }  // end OBJECT
+    )
 
 }
 

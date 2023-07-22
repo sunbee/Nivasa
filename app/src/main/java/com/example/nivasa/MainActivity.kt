@@ -32,7 +32,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             NivasaTheme {
                 val context = LocalContext.current
-                val lifecycleOwner = LocalLifecycleOwner.current
                 val cameraProviderFuture = remember {
                     ProcessCameraProvider.getInstance(context)
                 }

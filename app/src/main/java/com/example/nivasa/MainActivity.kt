@@ -32,9 +32,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             NivasaTheme {
                 val context = LocalContext.current
-                val cameraProviderFuture = remember {
-                    ProcessCameraProvider.getInstance(context)
-                }
                 var hasCameraPermission by remember {
                     mutableStateOf(
                         ContextCompat.checkSelfPermission(
@@ -52,9 +49,8 @@ class MainActivity : ComponentActivity() {
                     launcher.launch(Manifest.permission.CAMERA)
                 })
                 CameraPreview(modifier = Modifier,
-                    hasCameraPermission = hasCameraPermission,
-                    cameraProviderFuture = cameraProviderFuture)
-
+                    hasCameraPermission = hasCameraPermission
+                )
             }
         }
     }

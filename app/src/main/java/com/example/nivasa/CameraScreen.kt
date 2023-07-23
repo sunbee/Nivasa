@@ -36,7 +36,22 @@ fun CameraPreview(
 ) {
     val context = LocalContext.current
     val lifeCycleOwner = LocalLifecycleOwner.current
+    /*
+    * PreviewView: The PreviewView is provided by the CameraX library
+    * and is used to display the camera preview on the screen.
+    * Set up the Preview use case with preview.setSurfaceProvider
+    * to show the camera feed within the PreviewView.
+    * */
+    val previewView = PreviewView(context)
+    val preview = Preview.Builder().build()
+    preview.setSurfaceProvider(previewView.surfaceProvider)
+
     val imageCapture = ImageCapture.Builder().build()
+
+    val selector = CameraSelector.Builder()
+        .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+        .build()
+
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -65,19 +80,6 @@ fun CameraPreview(
                 * create the PreviewView, set up the camera preview, and bind the camera lifecycle
                 * using bindToLifecycle.*/
                 factory = { context ->
-                    /*
-                    * PreviewView: The PreviewView is provided by the CameraX library
-                    * and is used to display the camera preview on the screen.
-                    * Set up the Preview use case with preview.setSurfaceProvider
-                    * to show the camera feed within the PreviewView.
-                    * */
-                    val previewView = PreviewView(context)
-                    val preview = Preview.Builder().build()
-                    val selector = CameraSelector.Builder()
-                        .requireLensFacing(CameraSelector.LENS_FACING_BACK)
-                        .build()
-                    preview.setSurfaceProvider(previewView.surfaceProvider)
-
                     cameraProviderFuture.get()?.unbindAll()
                     try {
                         /*
@@ -118,6 +120,7 @@ private fun captureSnap(context: Context, imageCapture: ImageCapture) {
     val snapFile = File(outputDirectory, "IMG_${timeStamp}.jpg")
 
     val outputOptions = ImageCapture.OutputFileOptions.Builder(snapFile).build()
+
     imageCapture?.takePicture(
         outputOptions,
         ContextCompat.getMainExecutor(context),

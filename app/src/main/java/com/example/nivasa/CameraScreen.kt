@@ -10,13 +10,18 @@ import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -24,6 +29,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import coil.compose.rememberImagePainter
 import com.google.common.util.concurrent.ListenableFuture
 import java.io.File
 import java.text.SimpleDateFormat
@@ -32,10 +38,20 @@ import java.util.Locale
 @Composable
 fun CameraPreview(
     modifier: Modifier,
-    hasCameraPermission: Boolean
 ) {
     val context = LocalContext.current
     val lifeCycleOwner = LocalLifecycleOwner.current
+
+    val cameraProviderFuture = remember {
+        /*
+        * CameraProviderFuture: The cameraProviderFuture is a ListenableFuture
+        * that represents the asynchronous operation of obtaining the ProcessCameraProvider.
+        * The future is used to retrieve the ProcessCameraProvider,
+        * to use to bind the camera lifecycle. See detailed appendix.
+        * */
+        ProcessCameraProvider.getInstance(context)
+    }  // Must be in composable scope
+
     /*
     * PreviewView: The PreviewView is provided by the CameraX library
     * and is used to display the camera preview on the screen.
@@ -46,74 +62,89 @@ fun CameraPreview(
     val preview = Preview.Builder().build()
     preview.setSurfaceProvider(previewView.surfaceProvider)
 
-    val imageCapture = ImageCapture.Builder().build()
+    val imageCapture = remember {
+        ImageCapture.Builder().build()
+    }
 
     val selector = CameraSelector.Builder()
         .requireLensFacing(CameraSelector.LENS_FACING_BACK)
         .build()
 
+    val capturedSnapURI = remember {
+        mutableStateOf<Uri?>(null)
+    }
 
+    /*
+    * The AndroidView composable allows integration of the PreviewView
+    * into the Jetpack Compose hierarchy seamlessly, and the Column composable
+    * provides a neat and simple way to organize the UI elements.
+    * */
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        if (hasCameraPermission) {
-            val cameraProviderFuture = remember {
-                /*
-                * CameraProviderFuture: The cameraProviderFuture is a ListenableFuture
-                * that represents the asynchronous operation of obtaining the ProcessCameraProvider.
-                * The future is used to retrieve the ProcessCameraProvider,
-                * to use to bind the camera lifecycle.
-                * */
-                ProcessCameraProvider.getInstance(context)
-            }  // Must be in composable scope
-
+        AndroidView(
             /*
-            * Handle the camera preview and binding the camera lifecycle using the CameraX library.
-            * The AndroidView composable allows integration of the PreviewView
-            * into the Jetpack Compose hierarchy seamlessly, and the Column composable
-            * provides a neat and simple way to organize the UI elements.
-            * */
-            AndroidView(
-                /*
-                * AndroidView: The AndroidView composable is used to embed native Android views,
-                * such as PreviewView, into Jetpack Compose. Inside the factory parameter of AndroidView,
-                * create the PreviewView, set up the camera preview, and bind the camera lifecycle
-                * using bindToLifecycle.*/
-                factory = { context ->
-                    cameraProviderFuture.get()?.unbindAll()
-                    try {
-                        /*
-                        * try-catch: Properly handle any exceptions that might occur
-                        * during the camera binding process using a try-catch block.
-                        * If an exception is thrown, it is caught, Print the stack trace
-                        * to diagnose any potential issues.
-                        * */
-                        cameraProviderFuture.get().bindToLifecycle(
-                            lifeCycleOwner,
-                            selector,
-                            preview,
-                            imageCapture
-                        )
-                    } catch(e: Exception) {
-                        e.printStackTrace()
-                    }
-                    previewView
-                }  // end FACTORY
-            )  // end ANDROIDVIEW
-        }  // end IF CAMERAHASPERMISSION
+            * AndroidView: The AndroidView composable is used to embed native Android views,
+            * such as PreviewView, into Jetpack Compose. Inside the factory parameter of AndroidView,
+            * create the PreviewView, set up the camera preview, and bind the camera lifecycle
+            * using bindToLifecycle.*/
+            factory = { context ->
+                //cameraProviderFuture.get()?.unbindAll()
+                try {
+                    /*
+                    * try-catch: Properly handle any exceptions that might occur
+                    * during the camera binding process using a try-catch block.
+                    * If an exception is thrown, it is caught, Print the stack trace
+                    * to diagnose any potential issues.
+                    * */
+                    cameraProviderFuture.get().bindToLifecycle(
+                        lifeCycleOwner,
+                        selector,
+                        preview,
+                        imageCapture
+                    )
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+                previewView
+            }  // end FACTORY
+        )  // end ANDROIDVIEW
+
         // Button for capturing photos
         Button(
-            onClick = { captureSnap(context, imageCapture) }, // Call the capturePhoto function on button click
+            onClick = {
+                captureSnap(
+                    context,
+                    imageCapture
+                ) { capturedURI ->
+                    capturedSnapURI.value = capturedURI // Update the capturedImageUri state
+                }
+            }, // Call the capturePhoto function on button click
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .padding(16.dp)
         ) {
             Text(text = "Capture Photo")
         }
+
+
+        capturedSnapURI.value?.let { uri ->
+            Image(
+                painter = rememberImagePainter(uri),
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+
+            )
+        }
     }  // end COLUMN
 }
 
-private fun captureSnap(context: Context, imageCapture: ImageCapture) {
+private fun captureSnap(
+    context: Context,
+    imageCapture: ImageCapture,
+    uponImageSaved: (Uri) -> Unit) {
     val TAG = "CAPTURE_SNAP"
     val outputDirectory = getOutputDirectory(context)
     val timeStamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(System.currentTimeMillis())
@@ -138,6 +169,7 @@ private fun captureSnap(context: Context, imageCapture: ImageCapture) {
                 * */
                 val snapURI = Uri.fromFile(snapFile)
                 Log.d(TAG, "Got snap with URI: $snapURI")
+                uponImageSaved(snapURI)
             }
 
             override fun onError(exception: ImageCaptureException) {
@@ -173,3 +205,58 @@ private fun getOutputDirectory(context: Context): File {
     }
     return mediaDirectory ?: context.filesDir
 }
+
+/* APPENDIX I: CAMERA USAGE IN ANDROID WITH PROVIDER & USE CASES
+*
+* `ProcessCameraProvider` is a crucial component in the CameraX library,
+* and its role is to provide access to the camera and the necessary camera-related resources.
+* It acts as a bridge between our app and the underlying camera hardware
+* and allows us to bind different camera use cases to the camera device.
+* Call `ProcessCameraProvider.getInstance() to obtain an instance
+* of the `ProcessCameraProvider` class. This instance is essential
+* for setting up and managing the camera and the associated use cases
+* (e.g., preview, image capture, image analysis).
+* Here's what happens when we get an instance of `ProcessCameraProvider` using `getInstance()`:
+* 1. **Camera Initialization**: The `ProcessCameraProvider` is responsible
+* for initializing the camera hardware and preparing it for use.
+* When we call `ProcessCameraProvider.getInstance()`, the library initializes the camera,
+* and if successful, it returns an instance of the `ProcessCameraProvider`.
+* 2. **Camera Lifecycle Management**: CameraX manages the camera's lifecycle,
+* allowing us to bind camera use cases to a specific lifecycle owner,
+* typically an `Activity` or a `Fragment`. By using `bindToLifecycle()`
+* with a `LifecycleOwner`, we ensure that the camera is released
+* and resources are appropriately managed when the associated `LifecycleOwner` is destroyed.
+* 3. **Use Case Management**: The `ProcessCameraProvider` allows us to bind various camera use cases
+* to the camera device. We can set up and configure multiple use cases
+* (e.g., `Preview`, `ImageCapture`, `ImageAnalysis`) independently
+* and then bind them to the camera provider when needed.
+* 4. *Future for Asynchronous Initialization**: The `getInstance()` method
+* returns a `ListenableFuture<ProcessCameraProvider>`. A `ListenableFuture`
+* is a part of the Guava library and is used to represent a future result
+* that might not be available immediately. CameraX uses this future
+* to asynchronously initialize the camera and provide the `ProcessCameraProvider` instance
+* once it's ready. This is why we often see code that uses `.addListener()` or `.get()`
+* to retrieve the `ProcessCameraProvider` instance.
+*
+* Here's an example of how to use `ProcessCameraProvider.getInstance()`:
+* ```
+* val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+*
+* cameraProviderFuture.addListener({
+*   // Camera initialization succeeded, and we have access to the ProcessCameraProvider
+*   val cameraProvider = cameraProviderFuture.get()
+*   // Use the cameraProvider to set up and bind camera use cases
+*   // e.g., binding the Preview and ImageCapture use cases
+* }, ContextCompat.getMainExecutor(context))
+* ```
+* In the code above, `ProcessCameraProvider.getInstance(context)` returns a `ListenableFuture`,
+* and we use `addListener()` to register a callback that will be invoked
+* when the future is complete (i.e., when the camera initialization is successful).
+* Once the future is complete, we retrieve the `ProcessCameraProvider` instance
+* using `cameraProviderFuture.get()` and proceed to set up and bind the camera use cases as needed.
+*
+* By obtaining the `ProcessCameraProvider` instance, we gain access to the core functionalities
+* of CameraX, allowing us to interact with the camera hardware and configure various use cases
+* to build your camera-related features in the app.
+* */
+

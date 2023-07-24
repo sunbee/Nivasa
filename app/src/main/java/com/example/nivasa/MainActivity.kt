@@ -48,13 +48,13 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(key1 = true, block = {
                     launcher.launch(Manifest.permission.CAMERA)
                 })
-                CameraPreview(modifier = Modifier,
-                    hasCameraPermission = hasCameraPermission
-                )
-            }
-        }
-    }
-}
+                if (hasCameraPermission) {
+                    CameraPreview(modifier = Modifier)
+                }
+            }  // end NIVASA THEME
+        }  // end SET CONTENT
+    }  // end ON CREATE
+}  // end MAIN ACTIVITY
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {

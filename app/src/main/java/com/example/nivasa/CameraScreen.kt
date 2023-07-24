@@ -10,7 +10,6 @@ import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,15 +26,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import coil.annotation.ExperimentalCoilApi
-import coil.compose.rememberImagePainter
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 @OptIn(ExperimentalCoilApi::class)
 @Composable
-fun CameraPreview(
+fun CameraScreen(
     modifier: Modifier,
+    uponSnapCaptured: (Uri) -> Unit
 ) {
     val context = LocalContext.current
     val lifeCycleOwner = LocalLifecycleOwner.current
@@ -69,17 +67,13 @@ fun CameraPreview(
         .requireLensFacing(CameraSelector.LENS_FACING_BACK)
         .build()
 
-    val capturedSnapURI = remember {
-        mutableStateOf<Uri?>(null)
-    }
-
     /*
     * The AndroidView composable allows integration of the PreviewView
     * into the Jetpack Compose hierarchy seamlessly, and the Column composable
     * provides a neat and simple way to organize the UI elements.
     * */
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxWidth()
     ) {
         AndroidView(
             /*
@@ -114,36 +108,23 @@ fun CameraPreview(
             onClick = {
                 captureSnap(
                     context,
-                    imageCapture
-                ) { capturedURI ->
-                    capturedSnapURI.value = capturedURI // Update the capturedImageUri state
-                }
+                    imageCapture,
+                    uponSnapCaptured
+                )
             }, // Call the capturePhoto function on button click
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .padding(16.dp)
         ) {
             Text(text = "Capture Photo")
-        }
-
-
-        capturedSnapURI.value?.let { uri ->
-            Image(
-                painter = rememberImagePainter(uri),
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-
-            )
-        }
+        }  // end BUTTON
     }  // end COLUMN
 }
 
 private fun captureSnap(
     context: Context,
     imageCapture: ImageCapture,
-    uponImageSaved: (Uri) -> Unit) {
+    uponSnapCaptured: (Uri) -> Unit) {
     val TAG = "CAPTURE_SNAP"
     val outputDirectory = getOutputDirectory(context)
     val timeStamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(System.currentTimeMillis())
@@ -168,7 +149,7 @@ private fun captureSnap(
                 * */
                 val snapURI = Uri.fromFile(snapFile)
                 Log.d(TAG, "Got snap with URI: $snapURI")
-                uponImageSaved(snapURI)
+                uponSnapCaptured(snapURI)
             }
 
             override fun onError(exception: ImageCaptureException) {
@@ -185,7 +166,6 @@ private fun captureSnap(
             * */
         }  // end OBJECT
     )
-
 }
 
 private fun getOutputDirectory(context: Context): File {

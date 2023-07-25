@@ -68,7 +68,13 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NivasaApp() {
-    val images = remember { mutableStateListOf<Uri?>(null) } // REMOVE
+    val context = LocalContext.current
+    val resources = context.resources // Replace 'context' with the appropriate context (e.g., applicationContext or activity)
+    val drawableResId = resources.getIdentifier("default_image", "drawable", context.packageName)
+    val defaultImageUri = Uri.parse("android.resource://${context.packageName}/$drawableResId")
+    val defaultImageCount = 4
+    val defaultImages = List(defaultImageCount) { defaultImageUri }
+    val snaps = remember { mutableStateListOf(*defaultImages.toTypedArray()) }
     val TAG = "NIVASA_APP"
 
     Scaffold(
@@ -80,7 +86,7 @@ fun NivasaApp() {
                     .fillMaxWidth()
             ) {
                 ImageGallery(
-                    images = images,
+                    images = snaps.asReversed(), // REMOVE // images,
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
@@ -92,8 +98,9 @@ fun NivasaApp() {
                         .fillMaxSize()
                         .background(Color.Blue),
                     uponSnapCaptured = { capturedImage ->
-                            images.add(0, capturedImage)
-                            Log.d(TAG, "Got images: ${images.size}") })
+                            snaps.removeFirst()
+                            snaps.add(capturedImage)
+                            Log.d(TAG, "Got snaps: ${snaps.size}") })
             }  // end COLUMN
         }  // end CONTENT
     )

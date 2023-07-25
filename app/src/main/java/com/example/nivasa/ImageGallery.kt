@@ -26,35 +26,21 @@ fun ImageGallery(
     images: MutableList<Uri?>,
     modifier: Modifier) {
     val TAG = "IMAGE_GALLERY"
-    val context = LocalContext.current
-    val resources = context.resources // Replace 'context' with the appropriate context (e.g., applicationContext or activity)
-    val drawableResId = resources.getIdentifier("default_image", "drawable", context.packageName)
-    val defaultImageUri = Uri.parse("android.resource://${context.packageName}/$drawableResId")
-    Log.d(TAG, "Got Default URI: ${defaultImageUri}")
+
     // Display a 2x2 grid of images using LazyVerticalGrid
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         contentPadding = PaddingValues(8.dp),
         modifier = modifier
     ) {
-        items(images.size + 1) { index ->
+        items(images.size) { index ->
             // Calculate the image to display based on index and available images
-            val imageUri = if (index < images.size) images[index] else null
-            val painter: ImagePainter = if (imageUri != null) {
-                rememberImagePainter(
+            val imageUri = images[index]
+            val painter: ImagePainter = rememberImagePainter(
                     data = imageUri,
                     builder = {
                         // You can apply transformations here if needed
-                    }
-                )
-            } else {
-                rememberImagePainter(
-                    data = defaultImageUri,
-                    builder = {
-                        // You can apply transformations here if needed
-                    }
-                )
-            }
+                    })
 
             // Display the image in a square container
             Box(

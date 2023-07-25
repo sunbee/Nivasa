@@ -73,7 +73,7 @@ fun CameraScreen(
     * provides a neat and simple way to organize the UI elements.
     * */
     Column(
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier
     ) {
         AndroidView(
             /*

@@ -9,6 +9,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,6 +29,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -65,7 +68,7 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NivasaApp() {
-    val images = remember { mutableStateListOf<Uri?>(null) }
+    val images = remember { mutableStateListOf<Uri?>(null) } // REMOVE
     val TAG = "NIVASA_APP"
 
     Scaffold(
@@ -74,18 +77,24 @@ fun NivasaApp() {
             Column(
                 modifier = Modifier
                     .padding(paddingValues)
-                    .fillMaxSize()
+                    .fillMaxWidth()
             ) {
-                ImageGallery(images = images)
-                CameraScreen(
-                    modifier = Modifier.height(150.dp), // Modifier.weight(1f),
-                    uponSnapCaptured = { capturedImage ->
-                        images.add(0, capturedImage)
-                        Log.d(TAG, "Got images: ${images.size}")
-                    }
-                )
+                ImageGallery(
+                    images = images,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .background(Color.Magenta))
                 Spacer(modifier = Modifier.height(16.dp))
-            }
-        }
+                CameraScreen(
+                    modifier = Modifier
+                        .weight(2f)
+                        .fillMaxSize()
+                        .background(Color.Blue),
+                    uponSnapCaptured = { capturedImage ->
+                            images.add(0, capturedImage)
+                            Log.d(TAG, "Got images: ${images.size}") })
+            }  // end COLUMN
+        }  // end CONTENT
     )
 }

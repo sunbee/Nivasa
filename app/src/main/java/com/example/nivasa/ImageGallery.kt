@@ -22,7 +22,9 @@ import coil.compose.ImagePainter
 import coil.compose.rememberImagePainter
 
 @Composable
-fun ImageGallery(images: MutableList<Uri?>) {
+fun ImageGallery(
+    images: MutableList<Uri?>,
+    modifier: Modifier) {
     val TAG = "IMAGE_GALLERY"
     val context = LocalContext.current
     val resources = context.resources // Replace 'context' with the appropriate context (e.g., applicationContext or activity)
@@ -33,9 +35,7 @@ fun ImageGallery(images: MutableList<Uri?>) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         contentPadding = PaddingValues(8.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.Magenta)
+        modifier = modifier
     ) {
         items(images.size + 1) { index ->
             // Calculate the image to display based on index and available images

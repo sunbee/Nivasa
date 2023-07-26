@@ -23,17 +23,17 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import coil.annotation.ExperimentalCoilApi
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-@OptIn(ExperimentalCoilApi::class)
 @Composable
-fun CameraScreen(
-    modifier: Modifier,
-    uponSnapCaptured: (Uri) -> Unit
-) {
+fun CameraScreen(modifier: Modifier, navController: NavController) {
+    val viewModel = navController.previousBackStackEntry?.sharedViewModel<CameraViewModel>(navController = navController)
+
     val context = LocalContext.current
     val lifeCycleOwner = LocalLifecycleOwner.current
 
@@ -107,7 +107,7 @@ fun CameraScreen(
                 captureSnap(
                     context,
                     imageCapture,
-                    uponSnapCaptured
+                    viewModel!!
                 )
             }, // Call the capturePhoto function on button click
             modifier = Modifier
@@ -122,7 +122,7 @@ fun CameraScreen(
 private fun captureSnap(
     context: Context,
     imageCapture: ImageCapture,
-    uponSnapCaptured: (Uri) -> Unit) {
+    viewModel: CameraViewModel) {
     val TAG = "CAPTURE_SNAP"
     val outputDirectory = getOutputDirectory(context)
     val timeStamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(System.currentTimeMillis())
@@ -147,7 +147,7 @@ private fun captureSnap(
                 * */
                 val snapURI = Uri.fromFile(snapFile)
                 Log.d(TAG, "Got snap with URI: $snapURI")
-                uponSnapCaptured(snapURI)
+                viewModel.updateSnaps(snapURI)
             }
 
             override fun onError(exception: ImageCaptureException) {

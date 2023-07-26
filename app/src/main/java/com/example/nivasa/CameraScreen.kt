@@ -32,7 +32,7 @@ import java.util.Locale
 
 @Composable
 fun CameraScreen(modifier: Modifier, navController: NavController) {
-    val viewModel = navController.previousBackStackEntry?.sharedViewModel<CameraViewModel>(navController = navController)
+    val viewModel = navController.currentBackStackEntry?.sharedViewModel<CameraViewModel>(navController = navController)
 
     val context = LocalContext.current
     val lifeCycleOwner = LocalLifecycleOwner.current
@@ -109,6 +109,7 @@ fun CameraScreen(modifier: Modifier, navController: NavController) {
                     imageCapture,
                     viewModel!!
                 )
+                navController.navigate("gallery")
             }, // Call the capturePhoto function on button click
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)

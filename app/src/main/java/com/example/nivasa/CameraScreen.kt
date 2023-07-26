@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,13 +27,14 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.annotation.ExperimentalCoilApi
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 @Composable
 fun CameraScreen(modifier: Modifier, navController: NavController) {
-    val viewModel = navController.currentBackStackEntry?.sharedViewModel<CameraViewModel>(navController = navController)
+    val cameraViewModel = navController.currentBackStackEntry?.sharedViewModel<CameraViewModel>(navController = navController)
 
     val context = LocalContext.current
     val lifeCycleOwner = LocalLifecycleOwner.current
@@ -104,12 +106,11 @@ fun CameraScreen(modifier: Modifier, navController: NavController) {
         // Button for capturing photos
         Button(
             onClick = {
-                captureSnap(
-                    context,
-                    imageCapture,
-                    viewModel!!
-                )
-                navController.navigate("gallery")
+                    captureSnap(
+                        context,
+                        imageCapture,
+                        cameraViewModel!!
+                    )
             }, // Call the capturePhoto function on button click
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
@@ -117,13 +118,20 @@ fun CameraScreen(modifier: Modifier, navController: NavController) {
         ) {
             Text(text = "Capture Photo")
         }  // end BUTTON
+        Button(
+            onClick = {
+                navController.navigate("gallery")
+            }
+        ) {
+            Text("View Gallery")
+        }
     }  // end COLUMN
 }
 
 private fun captureSnap(
     context: Context,
     imageCapture: ImageCapture,
-    viewModel: CameraViewModel) {
+    cameraViewModel: CameraViewModel) {
     val TAG = "CAPTURE_SNAP"
     val outputDirectory = getOutputDirectory(context)
     val timeStamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(System.currentTimeMillis())
@@ -148,7 +156,7 @@ private fun captureSnap(
                 * */
                 val snapURI = Uri.fromFile(snapFile)
                 Log.d(TAG, "Got snap with URI: $snapURI")
-                viewModel.updateSnaps(snapURI)
+                cameraViewModel.updateSnaps(snapURI)
             }
 
             override fun onError(exception: ImageCaptureException) {

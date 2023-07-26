@@ -1,6 +1,7 @@
 package com.example.nivasa
 
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -8,6 +9,8 @@ import kotlinx.coroutines.flow.asStateFlow
 
 
 class CameraViewModel: ViewModel() {
+
+    val TAG = "VIEW_MODEL"
 
     // Replace this with a function to get the default image URI
     private fun getDefaultImageUri(): Uri {
@@ -25,5 +28,6 @@ class CameraViewModel: ViewModel() {
     // Function to update the list of image URIs
     fun updateSnaps(newSnap: Uri) {
         _snaps.value = _snaps.value.dropLast(1).toMutableList().apply { add(0, newSnap) }
+        Log.d(TAG, "Got snaps: ${_snaps.value[0]}")
     }
 }

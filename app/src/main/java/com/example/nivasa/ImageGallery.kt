@@ -26,8 +26,8 @@ import coil.compose.rememberImagePainter
 @Composable
 fun ImageGallery(modifier: Modifier, navController: NavController) {
     // Display a 2x2 grid of images using LazyVerticalGrid
-    val viewModel = navController.currentBackStackEntry?.sharedViewModel<CameraViewModel>(navController = navController)
-    val snaps = viewModel!!.snaps
+    val cameraViewModel = navController.currentBackStackEntry?.sharedViewModel<CameraViewModel>(navController = navController)
+    val snaps = cameraViewModel!!.snaps
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         contentPadding = PaddingValues(8.dp),

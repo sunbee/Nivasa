@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,6 +35,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
+import kotlinx.coroutines.flow.count
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.firstOrNull
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -117,8 +121,9 @@ fun CameraScreen(modifier: Modifier, navController: NavController) {
             }  // end FACTORY
         )  // end ANDROIDVIEW
 
+        val progress = "${cameraViewModel?.countSnaps?.value} / 4"
         CustomFontText(text = "Take 4 snaps for the gallery.", FontSize.Medium)
-        CustomFontText(text = cameraViewModel!!.countSnaps.value.toString(), fsize = FontSize.Large )
+        CustomFontText(text = progress, fsize = FontSize.Large)
 
         // Button for capturing photos
         Row(
@@ -153,9 +158,7 @@ fun CameraScreen(modifier: Modifier, navController: NavController) {
             ) {
                 Text("View Gallery")
             }
-
-
-        }
+        }  // end ROW
     }  // end COLUMN
 }
 

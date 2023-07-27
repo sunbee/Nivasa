@@ -5,17 +5,9 @@ import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.count
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.forEach
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-
 
 class CameraViewModel: ViewModel() {
 
@@ -43,6 +35,4 @@ class CameraViewModel: ViewModel() {
 
     private val _countSnaps = mutableStateOf(0)
     val countSnaps: State<Int> = _countSnaps
-
-
 }

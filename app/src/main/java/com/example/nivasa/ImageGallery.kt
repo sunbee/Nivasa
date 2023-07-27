@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.ImagePainter
@@ -30,6 +31,7 @@ fun ImageGallery(modifier: Modifier, navController: NavController) {
     // Display a 2x2 grid of images using LazyVerticalGrid
     val cameraViewModel = navController.currentBackStackEntry?.sharedViewModel<CameraViewModel>(navController = navController)
     val snaps = cameraViewModel!!.snaps
+    val context = LocalContext.current
 
     Column(
         verticalArrangement = Arrangement.SpaceBetween,
@@ -85,7 +87,7 @@ fun ImageGallery(modifier: Modifier, navController: NavController) {
                 Text("Back")
             }
             Button(
-                onClick = { /*TODO*/ },
+                onClick = { cameraViewModel?.sendImages(context) },
                 modifier = Modifier
                     .weight(1f)
                     .padding(16.dp)

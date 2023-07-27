@@ -1,13 +1,18 @@
 package com.example.nivasa
 
+import android.content.Context
+import android.content.Intent
 import android.net.Uri
+import android.os.Parcelable
 import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.io.File
 
 class CameraViewModel: ViewModel() {
 
@@ -35,4 +40,29 @@ class CameraViewModel: ViewModel() {
 
     private val _countSnaps = mutableStateOf(0)
     val countSnaps: State<Int> = _countSnaps
+
+    fun sendImages(context: Context) {
+        val intent = Intent(Intent.ACTION_SEND_MULTIPLE)
+        intent.type = "image/jpeg"
+
+        val imageUriList = mutableListOf<Uri>()
+        for (snap in snaps.value) {
+            val file = snap.path?.let { File(it) }
+            val uri = file?.let {
+                FileProvider.getUriForFile(
+                    context,
+                    context.packageName + ".provider",
+                    it
+                )
+            }
+            if (uri != null) {
+                imageUriList.add(uri)
+            }
+        }
+
+        val parcelableList: ArrayList<out Parcelable> = ArrayList(imageUriList)
+
+        intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, parcelableList)
+        context.startActivity(Intent.createChooser(intent, "Send images"))
+    }
 }

@@ -10,24 +10,30 @@ import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import coil.annotation.ExperimentalCoilApi
-import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -55,17 +61,23 @@ fun CameraScreen(modifier: Modifier, navController: NavController) {
     * Set up the Preview use case with preview.setSurfaceProvider
     * to show the camera feed within the PreviewView.
     * */
-    val previewView = PreviewView(context)
-    val preview = Preview.Builder().build()
+    val previewView = remember {
+        PreviewView(context)
+    }
+    val preview = remember {
+        Preview.Builder().build()
+    }
     preview.setSurfaceProvider(previewView.surfaceProvider)
 
     val imageCapture = remember {
         ImageCapture.Builder().build()
     }
 
-    val selector = CameraSelector.Builder()
-        .requireLensFacing(CameraSelector.LENS_FACING_BACK)
-        .build()
+    val selector = remember {
+        CameraSelector.Builder()
+            .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+            .build()
+    }
 
     /*
     * The AndroidView composable allows integration of the PreviewView
@@ -73,6 +85,8 @@ fun CameraScreen(modifier: Modifier, navController: NavController) {
     * provides a neat and simple way to organize the UI elements.
     * */
     Column(
+        verticalArrangement = Arrangement.SpaceBetween,
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
     ) {
         AndroidView(
@@ -103,27 +117,44 @@ fun CameraScreen(modifier: Modifier, navController: NavController) {
             }  // end FACTORY
         )  // end ANDROIDVIEW
 
+        CustomFontText(text = "Take 4 snaps for the gallery.", FontSize.Medium)
+        CustomFontText(text = cameraViewModel!!.countSnaps.value.toString(), fsize = FontSize.Large )
+
         // Button for capturing photos
-        Button(
-            onClick = {
+        Row(
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .fillMaxWidth()
+                .background(Color.Black)
+        ) {
+            Button(
+                onClick = {
                     captureSnap(
                         context,
                         imageCapture,
                         cameraViewModel!!
                     )
-            }, // Call the capturePhoto function on button click
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(16.dp)
-        ) {
-            Text(text = "Capture Photo")
-        }  // end BUTTON
-        Button(
-            onClick = {
-                navController.navigate("gallery")
+                }, // Call the capturePhoto function on button click
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(16.dp)
+            ) {
+                Text(text = "Capture Photo")
+            }  // end BUTTON
+            Button(
+                onClick = {
+                    navController.navigate("gallery") {
+                        popUpTo("preview")
+                    }
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(16.dp)
+            ) {
+                Text("View Gallery")
             }
-        ) {
-            Text("View Gallery")
+
+
         }
     }  // end COLUMN
 }
@@ -190,6 +221,26 @@ private fun getOutputDirectory(context: Context): File {
         it != null && Environment.MEDIA_MOUNTED == Environment.getExternalStorageState(it)
     }
     return mediaDirectory ?: context.filesDir
+}
+
+enum class FontSize(val value: Int) {
+    Small(12),
+    Medium(16),
+    Large(20)
+}
+
+@Composable
+fun CustomFontText(text: String, fsize: FontSize) {
+    Text(
+        text = text,
+        style = TextStyle(
+            fontFamily = FontFamily(Font(R.font.font_family)),
+            fontWeight = FontWeight.Bold,
+            fontSize = fsize.value.sp,
+            color = Color.Cyan
+            // You can customize other text properties here as well
+        )
+    )
 }
 
 /* APPENDIX I: CAMERA USAGE IN ANDROID WITH PROVIDER & USE CASES
